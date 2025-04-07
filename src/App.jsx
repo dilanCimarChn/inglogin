@@ -1,35 +1,45 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { useState, useEffect } from 'react';
+import { onAuthStateChanged } from 'firebase/auth';
+import { auth } from './firebase/config';
+import Login from './views/Login';
+import Dashboard from './views/Dashboard';
+import './App.css';
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [currentUser, setCurrentUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    console.log("App.jsx: Configurando listener de autenticación");
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      console.log("Estado de autenticación cambiado:", user ? `Usuario autenticado: ${user.email}` : "No hay usuario autenticado");
+      setCurrentUser(user);
+      setLoading(false);
+    });
+
+    
+    return () => unsubscribe();
+  }, []);
+
+  if (loading) {
+    return (
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        height: '100vh',
+        backgroundColor: '#f0f2f5'
+      }}>
+        <p>Cargando...</p>
+      </div>
+    );
+  }
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    <div className="app-container">
+      {currentUser ? <Dashboard user={currentUser} /> : <Login />}
+    </div>
+  );
 }
 
-export default App
+export default App;
